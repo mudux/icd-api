@@ -51,7 +51,7 @@ class LinearizationEntity:
     other: dict = field(default_factory=dict)
 
     def __repr__(self):
-        response = f"Lookup {self.request_id} ({self.response_type}) - "
+        response = f"LinearizationEntity {self.request_id} ({self.response_type}) - "
         if self.lookup_id_match:
             response += f" {self.title}"
         else:
