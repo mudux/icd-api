@@ -392,7 +392,11 @@ class Api:
         :rtype: linearization
         """
         uri = f"{self.base_url}/release/11/{linearization_name}"
-        all_releases = self.get_request(uri=uri)
+
+        # note: the response here should never be a cached one, so don't use self.get_request
+        all_releases_response = requests.get(uri, headers=self.headers, verify=False)
+        all_releases = all_releases_response.json()
+
         if all_releases is None:
             raise ValueError(f"linearization {linearization_name} not found")
 
