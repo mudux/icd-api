@@ -1,8 +1,10 @@
 import json
 import os
-
+from pdb import set_trace
 from dotenv import load_dotenv, find_dotenv
 from icd_api.icd_api import Api
+
+# set_trace()
 
 load_dotenv(find_dotenv())
 
@@ -14,9 +16,46 @@ data_folder = os.path.join(os.path.dirname(__file__), "data")
 entities_folder = os.path.join(data_folder, "entities")
 os.makedirs(entities_folder, exist_ok=True)
 
-root_entity_id = "448895267"  # highest level ICD Entity 448895267  # smaller entity for testing: 1301318821; 1208497819
-root_ids = {"455013390": "stem_codes_455013390.json", "1920852714": "x_codes_1920852714.json"}
+root_entity_id = "455013390"  # highest level ICD Entity 448895267  ICD 11 455013390 # smaller entity for testing: 1301318821; 1208497819
+# 1435254666
 
+# ALL ENTITIES
+# root_ids = {
+#     "1249056269": "try1.json"
+# }
+root_ids = {
+    "455013390": "ALL_ICD11_LINENT.json"
+}
+# ALL CHAPTER ROOT ENTITIES (CHAPTER 1-26)
+# root_ids = {
+#     "1435254666": "stem_codes_1435254666.json",
+#     "1630407678": "stem_codes_1630407678.json",
+#     "1766440644": "stem_codes_1766440644.json",
+#     "1954798891": "stem_codes_1954798891.json",
+#     "21500692": "stem_codes_21500692.json",
+#     "334423054": "stem_codes_334423054.json",
+#     "274880002": "stem_codes_274880002.json",
+#     "1296093776": "stem_codes_1296093776.json",
+#     "868865918": "stem_codes_868865918.json",
+#     "1218729044": "stem_codes_1218729044.json",
+#     "426429380": "stem_codes_426429380.json",
+#     "197934298": "stem_codes_197934298.json",
+#     "1256772020": "stem_codes_1256772020.json",
+#     "1639304259": "stem_codes_1639304259.json",
+#     "1473673350": "stem_codes_1473673350.json",
+#     "30659757": "stem_codes_30659757.json",
+#     "577470983": "stem_codes_577470983.json",
+#     "714000734": "stem_codes_714000734.json",
+#     "1306203631": "stem_codes_1306203631.json",
+#     "223744320": "stem_codes_223744320.json",
+#     "1843895818": "stem_codes_1843895818.json",
+#     "435227771": "stem_codes_435227771.json",
+#     "850137482": "stem_codes_850137482.json",
+#     "1249056269": "stem_codes_1249056269.json",
+#     "1596590595": "stem_codes_1596590595.json",
+#     "718687701": "stem_codes_718687701.json",
+#     }
+lin_entities = []
 
 def get_entities_recurse(entities: list,
                          entity_id: str,
@@ -34,9 +73,15 @@ def get_entities_recurse(entities: list,
         existing = [e for e in entities if e.entity_id == entity_id]
         if existing:
             # we already processed this entity and by extension its children
+            # breakpoint()
             return entities
+    lin_entity = api.get_linearization_entity(entity_id=entity_id)
+    # breakpoint()
+    # print(icd_entity.__dict__)
 
     entities.append(icd_entity)
+    if lin_entity:
+        lin_entities.append(lin_entity.to_dict())
 
     for child_id in icd_entity.child_ids:
         existing = next(iter([e for e in entities if e.entity_id == child_id]), None)
@@ -61,6 +106,7 @@ def get_all_entities():
     # write each chapter to its own file
     for child_id, target_file_name in root_ids.items():
         target_file_path = os.path.join(entities_folder, target_file_name)
+        target_file_path2 = os.path.join(entities_folder, "lin_"+target_file_name)
         if not os.path.exists(target_file_path):
             print(f"get_all_entities - {child_id}")
             grandchild_entities = get_entities_recurse(
@@ -70,8 +116,11 @@ def get_all_entities():
                 exclude_duplicates=True
             )
 
-            with open(target_file_path, "w") as file:
-                data = json.dumps(grandchild_entities, default=lambda x: x.to_dict(), indent=4)
+            # with open(target_file_path, "w") as file:
+            #     data = json.dumps(grandchild_entities, default=lambda x: x.to_dict(), indent=4)
+            #     file.write(data)
+            with open(target_file_path2, "w") as file:
+                data = json.dumps(lin_entities, default=lambda x: x.to_dict(), indent=4)
                 file.write(data)
         else:
             print(f"get_all_entities - {child_id}.json already exists")
@@ -139,8 +188,8 @@ def get_distinct_entity_ids() -> list[str]:
 
 if __name__ == '__main__':
     # # to populate ancestors json files (one json per top-level entity)
-    # get_all_entities()
+    get_all_entities()
 
     # # to load existing ancestors into one json file (may include duplicates)
-    eids = get_distinct_entity_ids()
-    print(len(eids))
+    # eids = get_distinct_entity_ids()
+    # print(len(eids))
